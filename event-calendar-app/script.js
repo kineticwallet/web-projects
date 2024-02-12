@@ -1,5 +1,6 @@
 window.onload = function () {
     generateCalendear();
+    loadLocalStoredTasks();
 }
 
 function generateCalendear() {
@@ -42,10 +43,49 @@ function deleteTask(taskElement) {
     }
 }
 
-function editTask(taskElement) {
+function editTask(taskElement, day) {
+
     const newTaskDesc = prompt("Edit your task:", taskElement.textContent);
+
     if (newTaskDesc !== null && newTaskDesc.trim() !== "") {
+        const storedData = localStorage.getItem(day);
+        if (storedData !== null) {
+
+            const data = storedData.split(",")
+            data[data.indexOf(taskElement.textContent)] = newTaskDesc
+            localStorage.setItem(day, data.toString())
+        }
+
         taskElement.textContent = newTaskDesc
+
+    }
+}
+
+function loadLocalStoredTasks() {
+    const calendarDays = document.getElementById("calendar").children;
+    for (let i = 0; i < calendarDays.length; i++) {
+        const day = calendarDays[i]
+        const dataKey = day.textContent
+        const storedData = localStorage.getItem(dataKey);
+        if (storedData !== null) {
+            const deserializedData = storedData.split(",")
+            deserializedData.forEach((value) => {
+                const taskElement = document.createElement("div")
+                taskElement.className = "task";
+                taskElement.textContent = value;
+
+                taskElement.addEventListener("contextmenu", function (event) {
+                    event.preventDefault();
+                    deleteTask(taskElement)
+                })
+
+                taskElement.addEventListener("click", function (event) {
+                    editTask(taskElement, dataKey)
+                })
+
+                day.appendChild(taskElement)
+            })
+        }
     }
 }
 
@@ -68,8 +108,21 @@ function addTask() {
                 })
 
                 taskElement.addEventListener("click", function (event) {
-                    editTask(taskElement)
+                    editTask(taskElement, taskDate.getDate())
                 })
+
+                const dataKey = taskDate.getDate().toString();
+                const previousData = localStorage.getItem(dataKey);
+
+                if (previousData !== null) {
+                    const data = previousData.split(",");
+                    data.push(taskDesc)
+                    localStorage.setItem(dataKey, data)
+                } else {
+                    localStorage.setItem(dataKey, taskDesc)
+                }
+
+                console.log(localStorage.getItem(dataKey), dataKey)
 
                 day.appendChild(taskElement)
                 break;
